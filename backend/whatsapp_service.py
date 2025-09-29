@@ -65,8 +65,11 @@ class WhatsAppCoffeePassportService:
 
     async def _handle_join(self, phone_number: str) -> MessageResponse:
         """Handle JOIN command - customer signup"""
+        # Clean phone number for consistency
+        clean_phone = phone_number.strip().replace(" ", "")
+        
         # Check if customer already exists
-        existing_customer = await self.customers_collection.find_one({"phone_number": phone_number})
+        existing_customer = await self.customers_collection.find_one({"phone_number": clean_phone})
         if existing_customer:
             return MessageResponse(
                 reply=f"Welcome back! You already have a passport.\n\nStamps: {existing_customer['stamps']}/10 | Rewards: {existing_customer['rewards']} | ID: #{existing_customer['customer_id']}\n\nSend 'STATUS' for full details."
