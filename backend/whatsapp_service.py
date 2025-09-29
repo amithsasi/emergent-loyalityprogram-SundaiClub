@@ -21,7 +21,7 @@ class WhatsAppCoffeePassportService:
         try:
             # Debug logging for incoming message
             original_phone = message_data.phone_number
-            phone_number = message_data.phone_number.strip().replace(" ", "")
+            phone_number = message_data.phone_number.strip().replace(" ", "").replace("+", "")
             message_text = message_data.message.strip().upper()
             
             logger.info(f"🐛 DEBUG: Original phone from WhatsApp: '{original_phone}'")
