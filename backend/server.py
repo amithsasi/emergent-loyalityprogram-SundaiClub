@@ -96,6 +96,86 @@ async def get_customer(customer_id: str, database = Depends(get_database)):
         raise HTTPException(status_code=404, detail="Customer not found")
     return Customer(**customer)
 
+class CustomerCreate(BaseModel):
+    phone_number: str
+    name: str
+    stamps: Optional[int] = 0
+    rewards: Optional[int] = 0
+
+class CustomerUpdate(BaseModel):
+    phone_number: Optional[str] = None
+    name: Optional[str] = None
+    stamps: Optional[int] = None
+    rewards: Optional[int] = None
+
+@api_router.post("/customers", response_model=Customer)
+async def create_customer(customer_data: CustomerCreate, database = Depends(get_database)):
+    """Create new customer"""
+    # Clean phone number
+    cleaned_phone = customer_data.phone_number.strip().replace(" ", "").replace("+", "")
+    
+    # Check if customer already exists
+    existing_customer = await database.customers.find_one({"phone_number": cleaned_phone})
+    if existing_customer:
+        raise HTTPException(status_code=400, detail="Customer already exists")
+    
+    # Generate unique customer ID
+    customer_id = f"C{str(abs(hash(cleaned_phone)))[:4]}"
+    reset_date = datetime.utcnow() + timedelta(days=90)  # 3 months from now
+    
+    customer_dict = {
+        "phone_number": cleaned_phone,
+        "name": customer_data.name.strip(),
+        "customer_id": customer_id,
+        "stamps": customer_data.stamps or 0,
+        "rewards": customer_data.rewards or 0,
+        "created_at": datetime.utcnow(),
+        "last_activity": datetime.utcnow(),
+        "reset_date": reset_date,
+        "is_active": True
+    }
+    
+    await database.customers.insert_one(customer_dict)
+    return Customer(**customer_dict)
+
+@api_router.put("/customers/{customer_id}", response_model=Customer)
+async def update_customer(customer_id: str, customer_data: CustomerUpdate, database = Depends(get_database)):
+    """Update customer"""
+    # Build update dictionary
+    update_data = {"last_activity": datetime.utcnow()}
+    
+    if customer_data.phone_number:
+        update_data["phone_number"] = customer_data.phone_number.strip().replace(" ", "").replace("+", "")
+    if customer_data.name:
+        update_data["name"] = customer_data.name.strip()
+    if customer_data.stamps is not None:
+        update_data["stamps"] = customer_data.stamps
+    if customer_data.rewards is not None:
+        update_data["rewards"] = customer_data.rewards
+    
+    result = await database.customers.update_one(
+        {"customer_id": customer_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    updated_customer = await database.customers.find_one({"customer_id": customer_id})
+    return Customer(**updated_customer)
+
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str, database = Depends(get_database)):
+    """Delete customer"""
+    result = await database.customers.delete_one({"customer_id": customer_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Also delete related audit logs
+    await database.audit_logs.delete_many({"customer_id": customer_id})
+    
+    return {"message": "Customer deleted successfully"}
+
 # Staff Management Routes
 @api_router.post("/staff", response_model=Staff)
 async def create_staff(staff_data: StaffCreate, database = Depends(get_database)):
