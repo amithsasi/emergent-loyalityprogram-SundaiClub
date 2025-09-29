@@ -373,6 +373,66 @@ const Dashboard = () => {
         <TabsContent value="customers" className="space-y-4">
           <Card>
             <CardHeader>
+              <CardTitle>Add New Customer</CardTitle>
+              <CardDescription>
+                Manually add a customer to the system
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="customer-name">Name</Label>
+                  <Input
+                    id="customer-name"
+                    value={newCustomer.name}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                    placeholder="Customer name"
+                    data-testid="customer-name-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customer-phone">Phone Number</Label>
+                  <Input
+                    id="customer-phone"
+                    value={newCustomer.phone_number}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
+                    placeholder="e.g. +919876543210"
+                    data-testid="customer-phone-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customer-stamps">Initial Stamps</Label>
+                  <Input
+                    id="customer-stamps"
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={newCustomer.stamps}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, stamps: parseInt(e.target.value) || 0 })}
+                    data-testid="customer-stamps-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customer-rewards">Initial Rewards</Label>
+                  <Input
+                    id="customer-rewards"
+                    type="number"
+                    min="0"
+                    value={newCustomer.rewards}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, rewards: parseInt(e.target.value) || 0 })}
+                    data-testid="customer-rewards-input"
+                  />
+                </div>
+              </div>
+              <Button onClick={addCustomer} disabled={!newCustomer.name || !newCustomer.phone_number} data-testid="add-customer-btn">
+                <Users className="mr-2 h-4 w-4" />
+                Add Customer
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Customer List</CardTitle>
               <CardDescription>
                 All registered customers and their progress
@@ -382,12 +442,12 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {customers.map((customer) => (
                   <div key={customer.customer_id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
+                    <div className="flex-1">
                       <div className="font-semibold">{customer.name}</div>
                       <div className="text-sm text-gray-600">ID: #{customer.customer_id}</div>
                       <div className="text-sm text-gray-600">{customer.phone_number}</div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right mr-4">
                       <Badge variant={customer.stamps >= 10 ? "default" : "secondary"}>
                         {customer.stamps}/10 stamps
                       </Badge>
@@ -395,11 +455,82 @@ const Dashboard = () => {
                         {customer.rewards} rewards
                       </div>
                     </div>
+                    <div className="space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingCustomer(customer)}
+                        data-testid={`edit-customer-${customer.customer_id}`}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeCustomer(customer.customer_id)}
+                        data-testid={`delete-customer-${customer.customer_id}`}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
+
+          {editingCustomer && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Customer: {editingCustomer.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-customer-name">Name</Label>
+                    <Input
+                      id="edit-customer-name"
+                      value={editingCustomer.name}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-customer-phone">Phone Number</Label>
+                    <Input
+                      id="edit-customer-phone"
+                      value={editingCustomer.phone_number}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, phone_number: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-customer-stamps">Stamps</Label>
+                    <Input
+                      id="edit-customer-stamps"
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={editingCustomer.stamps}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, stamps: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-customer-rewards">Rewards</Label>
+                    <Input
+                      id="edit-customer-rewards"
+                      type="number"
+                      min="0"
+                      value={editingCustomer.rewards}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, rewards: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                </div>
+                <div className="space-x-2">
+                  <Button onClick={updateCustomer}>Update Customer</Button>
+                  <Button variant="outline" onClick={() => setEditingCustomer(null)}>Cancel</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="staff" className="space-y-4">
