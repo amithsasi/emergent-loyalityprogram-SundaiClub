@@ -302,32 +302,41 @@ const Dashboard = () => {
     }
   };
 
-  const removeCustomer = async (customerId) => {
-    console.log('🐛 DELETE DEBUG: Attempting to delete customer:', customerId);
+  const removeCustomer = async (customerId, customerName) => {
+    console.log('🐛 DELETE DEBUG: Attempting to delete customer:', customerId, 'Name:', customerName);
     
-    if (!window.confirm('Are you sure you want to delete this customer? This will also remove all their audit logs.')) {
+    // More explicit confirmation
+    const confirmMessage = `Are you sure you want to delete customer "${customerName}" (ID: ${customerId})?\n\nThis action will:\n- Remove the customer from the system\n- Delete all their audit logs\n- Cannot be undone`;
+    
+    if (!window.confirm(confirmMessage)) {
       console.log('🐛 DELETE DEBUG: User cancelled deletion');
       return;
     }
+    
+    console.log('🐛 DELETE DEBUG: User confirmed deletion, proceeding...');
     
     try {
       console.log('🐛 DELETE DEBUG: Making API call to:', `${API}/customers/${customerId}`);
       const response = await axios.delete(`${API}/customers/${customerId}`);
       console.log('🐛 DELETE DEBUG: API response:', response.data);
       
-      fetchCustomers();
-      fetchStats();
+      // Refresh data
+      await fetchCustomers();
+      await fetchStats();
+      
       toast({
         title: "Customer Deleted",
-        description: "Customer has been deleted successfully.",
+        description: `Customer "${customerName}" has been deleted successfully.`,
       });
       console.log('🐛 DELETE DEBUG: Success toast shown');
     } catch (error) {
       console.error('🐛 DELETE DEBUG: Error occurred:', error);
       console.error('🐛 DELETE DEBUG: Error response:', error.response?.data);
+      console.error('🐛 DELETE DEBUG: Error status:', error.response?.status);
+      
       toast({
         title: "Error",
-        description: error.response?.data?.detail || "Failed to delete customer.",
+        description: error.response?.data?.detail || `Failed to delete customer "${customerName}".`,
         variant: "destructive",
       });
     }
