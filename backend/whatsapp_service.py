@@ -19,7 +19,7 @@ class WhatsAppCoffeePassportService:
     async def process_message(self, message_data: IncomingMessage) -> MessageResponse:
         """Process incoming WhatsApp message and return appropriate response"""
         try:
-            phone_number = message_data.phone_number
+            phone_number = message_data.phone_number.strip().replace(" ", "")
             message_text = message_data.message.strip().upper()
             
             logger.info(f"Processing message from {phone_number}: {message_text}")
