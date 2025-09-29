@@ -10,7 +10,7 @@ class PyObjectId(ObjectId):
         return {"type": "string"}
 
     @classmethod
-    def validate(cls, v):
+    def validate(cls, v, _info=None):
         if isinstance(v, ObjectId):
             return v
         if isinstance(v, str) and ObjectId.is_valid(v):
