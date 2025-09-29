@@ -245,8 +245,8 @@ class WhatsAppCoffeePassportService:
 
     async def _handle_redeem(self, staff_phone: str, message_text: str) -> MessageResponse:
         """Handle REDEEM command - staff confirms reward redemption"""
-        # Ensure phone number is cleaned for database comparison
-        clean_staff_phone = staff_phone.strip().replace(" ", "")
+        # Ensure phone number is cleaned for database comparison (remove spaces and + symbol)
+        clean_staff_phone = staff_phone.strip().replace(" ", "").replace("+", "")
         
         # Check if sender is authorized staff
         staff = await self.staff_collection.find_one({"phone_number": clean_staff_phone, "is_authorized": True})
