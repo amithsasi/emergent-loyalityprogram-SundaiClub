@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import httpx
 
 from models import IncomingMessage, MessageResponse, Customer, Staff, AuditLog, StaffCreate
