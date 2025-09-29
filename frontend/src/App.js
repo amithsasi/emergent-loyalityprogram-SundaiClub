@@ -1,38 +1,491 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import './App.css';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import axios from 'axios';
+import { Button } from './components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
+import { Badge } from './components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { Input } from './components/ui/input';
+import { Label } from './components/ui/label';
+import { AlertCircle, Coffee, Smartphone, Users, BarChart3, Shield, QrCode } from 'lucide-react';
+import { Alert, AlertDescription } from './components/ui/alert';
+import { useToast } from './hooks/use-toast';
+import { Toaster } from './components/ui/toaster';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+const WhatsAppQR = () => {
+  const [qrCode, setQrCode] = useState(null);
+  const [status, setStatus] = useState('disconnected');
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const checkStatus = async () => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      const response = await axios.get(`${API}/whatsapp/status`);
+      setStatus(response.data.connected ? 'connected' : 'disconnected');
+      return response.data.connected;
+    } catch (error) {
+      console.error('Status check failed:', error);
+      setStatus('error');
+      return false;
     }
   };
 
+  const fetchQR = async () => {
+    try {
+      const response = await axios.get(`${API}/whatsapp/qr`);
+      if (response.data.qr) {
+        setQrCode(response.data.qr);
+      } else {
+        setQrCode(null);
+      }
+    } catch (error) {
+      console.error('QR fetch failed:', error);
+    }
+  };
+
+  const startPolling = () => {
+    const interval = setInterval(async () => {
+      const isConnected = await checkStatus();
+      if (isConnected) {
+        setQrCode(null);
+        clearInterval(interval);
+        toast({
+          title: "WhatsApp Connected!",
+          description: "Your coffee passport system is now ready.",
+        });
+      } else {
+        await fetchQR();
+      }
+    }, 3000);
+
+    return interval;
+  };
+
   useEffect(() => {
-    helloWorldApi();
+    checkStatus();
+    const interval = startPolling();
+    return () => clearInterval(interval);
   }, []);
 
+  const handleConnect = async () => {
+    setLoading(true);
+    await checkStatus();
+    if (status !== 'connected') {
+      startPolling();
+    }
+    setLoading(false);
+  };
+
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
+          <Smartphone className="h-8 w-8 text-green-600" />
+        </div>
+        <CardTitle className="text-2xl font-bold">WhatsApp Connection</CardTitle>
+        <CardDescription>
+          Connect your WhatsApp to start the coffee passport system
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {status === 'connected' && (
+          <Alert className="border-green-200 bg-green-50">
+            <AlertCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              WhatsApp is connected! Customers can now send messages.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {status === 'disconnected' && (
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
+              WhatsApp is not connected. Scan the QR code to connect.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {status === 'error' && (
+          <Alert className="border-red-200 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              Connection error. Please check if the WhatsApp service is running.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {qrCode && (
+          <div className="text-center space-y-4">
+            <h3 className="font-semibold">Scan with WhatsApp:</h3>
+            <div className="bg-white p-4 rounded-lg border-2 border-gray-200 inline-block">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`}
+                alt="WhatsApp QR Code"
+                className="w-48 h-48"
+              />
+            </div>
+            <p className="text-sm text-gray-600">
+              Open WhatsApp → Settings → Linked Devices → Link a Device
+            </p>
+          </div>
+        )}
+
+        <Button
+          onClick={handleConnect}
+          disabled={loading || status === 'connected'}
+          className="w-full"
+          data-testid="connect-whatsapp-btn"
         >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+          {loading ? 'Connecting...' : status === 'connected' ? 'Connected ✓' : 'Connect WhatsApp'}
+        </Button>
+
+        {status === 'connected' && (
+          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+            <h4 className="font-semibold text-sm">Customer Commands:</h4>
+            <div className="text-xs space-y-1 text-gray-600">
+              <div><strong>JOIN</strong> - Create passport</div>
+              <div><strong>STATUS</strong> - Check progress</div>
+              <div><strong>REWARD</strong> - Claim free coffee</div>
+              <div><strong>HELP</strong> - Show all commands</div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const Dashboard = () => {
+  const [stats, setStats] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [newStaff, setNewStaff] = useState({ name: '', phone_number: '' });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchStats();
+    fetchCustomers();
+    fetchStaff();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get(`${API}/analytics/stats`);
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await axios.get(`${API}/customers`);
+      setCustomers(response.data);
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+    }
+  };
+
+  const fetchStaff = async () => {
+    try {
+      const response = await axios.get(`${API}/staff`);
+      setStaff(response.data);
+    } catch (error) {
+      console.error('Failed to fetch staff:', error);
+    }
+  };
+
+  const addStaff = async () => {
+    try {
+      await axios.post(`${API}/staff`, newStaff);
+      setNewStaff({ name: '', phone_number: '' });
+      fetchStaff();
+      toast({
+        title: "Staff Added",
+        description: `${newStaff.name} has been added as authorized staff.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add staff member.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeStaff = async (phoneNumber) => {
+    try {
+      await axios.delete(`${API}/staff/${phoneNumber}`);
+      fetchStaff();
+      toast({
+        title: "Staff Removed",
+        description: "Staff member has been removed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove staff member.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="total-customers">
+              {stats?.total_customers || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Customers</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="active-customers">
+              {stats?.active_customers || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Stamps</CardTitle>
+            <Coffee className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="total-stamps">
+              {stats?.total_stamps || 0}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="customers" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="customers">Customers</TabsTrigger>
+          <TabsTrigger value="staff">Staff Management</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="customers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer List</CardTitle>
+              <CardDescription>
+                All registered customers and their progress
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {customers.map((customer) => (
+                  <div key={customer.customer_id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="font-semibold">{customer.name}</div>
+                      <div className="text-sm text-gray-600">ID: #{customer.customer_id}</div>
+                      <div className="text-sm text-gray-600">{customer.phone_number}</div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={customer.stamps >= 10 ? "default" : "secondary"}>
+                        {customer.stamps}/10 stamps
+                      </Badge>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {customer.rewards} rewards
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="staff" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Add Staff Member</CardTitle>
+              <CardDescription>
+                Authorize staff members to add stamps and redeem rewards
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="staff-name">Name</Label>
+                  <Input
+                    id="staff-name"
+                    value={newStaff.name}
+                    onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                    placeholder="Staff member name"
+                    data-testid="staff-name-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="staff-phone">Phone Number</Label>
+                  <Input
+                    id="staff-phone"
+                    value={newStaff.phone_number}
+                    onChange={(e) => setNewStaff({ ...newStaff, phone_number: e.target.value })}
+                    placeholder="e.g. 1234567890"
+                    data-testid="staff-phone-input"
+                  />
+                </div>
+              </div>
+              <Button onClick={addStaff} disabled={!newStaff.name || !newStaff.phone_number} data-testid="add-staff-btn">
+                <Shield className="mr-2 h-4 w-4" />
+                Add Staff Member
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Authorized Staff</CardTitle>
+              <CardDescription>
+                Current staff members who can manage customer passports
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {staff.map((member) => (
+                  <div key={member.phone_number} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="font-semibold">{member.name}</div>
+                      <div className="text-sm text-gray-600">{member.phone_number}</div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeStaff(member.phone_number)}
+                      data-testid={`remove-staff-${member.phone_number}`}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+const Home = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <div className="mx-auto mb-6 p-4 bg-amber-600 rounded-full w-fit">
+            <Coffee className="h-12 w-12 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Coffee Passport</h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            WhatsApp-powered digital loyalty program. Customers collect stamps, track progress, and unlock rewards through simple WhatsApp messages.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/dashboard">
+              <Button size="lg" className="bg-amber-600 hover:bg-amber-700" data-testid="admin-dashboard-btn">
+                <BarChart3 className="mr-2 h-5 w-5" />
+                Admin Dashboard
+              </Button>
+            </Link>
+            <Link to="/setup">
+              <Button size="lg" variant="outline" data-testid="setup-whatsapp-btn">
+                <QrCode className="mr-2 h-5 w-5" />
+                Setup WhatsApp
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
+                <Smartphone className="h-8 w-8 text-blue-600" />
+              </div>
+              <CardTitle>WhatsApp Integration</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                Customers interact through familiar WhatsApp messages. No app downloads required.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
+                <Coffee className="h-8 w-8 text-green-600" />
+              </div>
+              <CardTitle>Digital Stamps</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                Staff verify purchases and add digital stamps. Collect 10 stamps to unlock rewards.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto mb-4 p-3 bg-purple-100 rounded-full w-fit">
+                <Shield className="h-8 w-8 text-purple-600" />
+              </div>
+              <CardTitle>Staff Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                Authorize staff members to manage customer passports and redeem rewards securely.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-12 bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-6">How It Works</h2>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-amber-600">For Customers:</h3>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Send "JOIN" to create passport</li>
+                <li>• Buy coffee & show ID to staff</li>
+                <li>• Send "STATUS" to check progress</li>
+                <li>• Send "REWARD" when you have 10 stamps</li>
+                <li>• Show redemption message to get free coffee</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-amber-600">For Staff:</h3>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Verify customer purchase</li>
+                <li>• Send "STAMP C1234" to add stamp</li>
+                <li>• Send "REDEEM C1234" to confirm reward</li>
+                <li>• Customer passport resets to 0/10</li>
+                <li>• All actions are logged for audit</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -42,11 +495,43 @@ function App() {
     <div className="App">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={
+            <div className="min-h-screen bg-gray-50">
+              <div className="bg-white shadow">
+                <div className="container mx-auto px-4 py-4">
+                  <div className="flex items-center justify-between">
+                    <Link to="/" className="flex items-center space-x-2">
+                      <Coffee className="h-8 w-8 text-amber-600" />
+                      <h1 className="text-2xl font-bold">Coffee Passport</h1>
+                    </Link>
+                    <Badge variant="outline">Admin Dashboard</Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="container mx-auto px-4 py-8">
+                <Dashboard />
+              </div>
+            </div>
+          } />
+          <Route path="/setup" element={
+            <div className="min-h-screen bg-gray-50 py-12">
+              <div className="container mx-auto px-4">
+                <div className="max-w-lg mx-auto">
+                  <div className="text-center mb-8">
+                    <Link to="/" className="inline-flex items-center space-x-2 text-amber-600 hover:text-amber-700">
+                      <Coffee className="h-6 w-6" />
+                      <span className="text-lg font-semibold">← Back to Coffee Passport</span>
+                    </Link>
+                  </div>
+                  <WhatsAppQR />
+                </div>
+              </div>
+            </div>
+          } />
         </Routes>
       </BrowserRouter>
+      <Toaster />
     </div>
   );
 }
