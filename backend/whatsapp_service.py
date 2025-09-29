@@ -137,11 +137,27 @@ class WhatsAppCoffeePassportService:
 
     async def _handle_stamp(self, staff_phone: str, message_text: str) -> MessageResponse:
         """Handle STAMP command - staff adds stamp to customer"""
+        # Debug logging for staff authorization
+        logger.info(f"🐛 DEBUG STAMP: Received staff_phone: '{staff_phone}'")
+        
         # Ensure phone number is cleaned for database comparison
         clean_staff_phone = staff_phone.strip().replace(" ", "")
+        logger.info(f"🐛 DEBUG STAMP: Cleaned staff_phone: '{clean_staff_phone}'")
+        
+        # Log all staff in database for comparison
+        all_staff = await self.staff_collection.find({"is_authorized": True}).to_list(100)
+        logger.info(f"🐛 DEBUG STAMP: All authorized staff in DB:")
+        for s in all_staff:
+            logger.info(f"🐛 DEBUG STAMP: DB Staff - Phone: '{s['phone_number']}', Name: '{s['name']}'")
         
         # Check if sender is authorized staff
+        logger.info(f"🐛 DEBUG STAMP: Looking for staff with phone: '{clean_staff_phone}'")
         staff = await self.staff_collection.find_one({"phone_number": clean_staff_phone, "is_authorized": True})
+        
+        if staff:
+            logger.info(f"🐛 DEBUG STAMP: Staff found! Name: '{staff['name']}'")
+        else:
+            logger.info(f"🐛 DEBUG STAMP: Staff NOT found in database!")
         if not staff:
             return MessageResponse(
                 reply="You are not authorized to add stamps. Please contact management."
