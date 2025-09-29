@@ -185,7 +185,7 @@ class WhatsAppCoffeePassportService:
         
         # Log the action
         audit_log = {
-            "staff_phone": staff_phone,
+            "staff_phone": clean_staff_phone,
             "customer_id": customer_id,
             "action": "STAMP",
             "timestamp": datetime.utcnow(),
