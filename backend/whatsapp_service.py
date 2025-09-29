@@ -140,8 +140,8 @@ class WhatsAppCoffeePassportService:
         # Debug logging for staff authorization
         logger.info(f"🐛 DEBUG STAMP: Received staff_phone: '{staff_phone}'")
         
-        # Ensure phone number is cleaned for database comparison
-        clean_staff_phone = staff_phone.strip().replace(" ", "")
+        # Ensure phone number is cleaned for database comparison (remove spaces and + symbol)
+        clean_staff_phone = staff_phone.strip().replace(" ", "").replace("+", "")
         logger.info(f"🐛 DEBUG STAMP: Cleaned staff_phone: '{clean_staff_phone}'")
         
         # Log all staff in database for comparison
