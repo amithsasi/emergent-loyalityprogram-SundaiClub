@@ -23,7 +23,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # WhatsApp service URL
-WHATSAPP_SERVICE_URL = "http://localhost:3001"
+WHATSAPP_SERVICE_URL = os.environ.get('WHATSAPP_SERVICE_URL', 'http://localhost:3001')
 
 # Create the main app without a prefix
 app = FastAPI(title="Coffee Passport API", description="WhatsApp Coffee Loyalty System")
