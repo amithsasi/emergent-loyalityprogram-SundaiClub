@@ -100,12 +100,20 @@ async def get_customer(customer_id: str, database = Depends(get_database)):
 @api_router.post("/staff", response_model=Staff)
 async def create_staff(staff_data: StaffCreate, database = Depends(get_database)):
     """Create new staff member"""
+    # Trim spaces from phone number and name
+    cleaned_phone = staff_data.phone_number.strip().replace(" ", "")
+    cleaned_name = staff_data.name.strip()
+    
     # Check if staff already exists
-    existing_staff = await database.staff.find_one({"phone_number": staff_data.phone_number})
+    existing_staff = await database.staff.find_one({"phone_number": cleaned_phone})
     if existing_staff:
         raise HTTPException(status_code=400, detail="Staff member already exists")
     
-    staff_dict = staff_data.dict()
+    # Create staff with cleaned data
+    staff_dict = {
+        "phone_number": cleaned_phone,
+        "name": cleaned_name
+    }
     staff_obj = Staff(**staff_dict)
     await database.staff.insert_one(staff_obj.dict())
     return staff_obj
