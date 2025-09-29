@@ -124,10 +124,33 @@ async def get_staff(database = Depends(get_database)):
     staff_members = await database.staff.find().to_list(1000)
     return [Staff(**staff) for staff in staff_members]
 
+@api_router.put("/staff/{phone_number}", response_model=Staff)
+async def update_staff(phone_number: str, staff_data: StaffCreate, database = Depends(get_database)):
+    """Update staff member"""
+    # Clean the new phone number
+    cleaned_phone = staff_data.phone_number.strip().replace(" ", "").replace("+", "")
+    cleaned_name = staff_data.name.strip()
+    
+    # Clean the lookup phone number
+    lookup_phone = phone_number.strip().replace(" ", "").replace("+", "")
+    
+    result = await database.staff.update_one(
+        {"phone_number": lookup_phone},
+        {"$set": {"phone_number": cleaned_phone, "name": cleaned_name}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Staff member not found")
+    
+    updated_staff = await database.staff.find_one({"phone_number": cleaned_phone})
+    return Staff(**updated_staff)
+
 @api_router.delete("/staff/{phone_number}")
 async def remove_staff(phone_number: str, database = Depends(get_database)):
     """Remove staff member"""
-    result = await database.staff.delete_one({"phone_number": phone_number})
+    # Clean the phone number for lookup
+    lookup_phone = phone_number.strip().replace(" ", "").replace("+", "")
+    result = await database.staff.delete_one({"phone_number": lookup_phone})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Staff member not found")
     return {"message": "Staff member removed successfully"}
