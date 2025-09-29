@@ -160,7 +160,7 @@ class WhatsAppCoffeePassportService:
         
         # Check for duplicate stamp (within 5 minutes)
         recent_stamp = await self.audit_collection.find_one({
-            "staff_phone": staff_phone,
+            "staff_phone": clean_staff_phone,
             "customer_id": customer_id,
             "action": "STAMP",
             "timestamp": {"$gte": datetime.utcnow() - timedelta(minutes=5)}
