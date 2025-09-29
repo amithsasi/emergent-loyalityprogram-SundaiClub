@@ -80,7 +80,7 @@ class WhatsAppCoffeePassportService:
         reset_date = datetime.utcnow() + timedelta(days=90)  # 3 months from now
         
         customer_data = {
-            "phone_number": phone_number,
+            "phone_number": clean_phone,
             "name": None,  # Will be filled when user responds
             "customer_id": customer_id,
             "stamps": 1,  # Welcome stamp
