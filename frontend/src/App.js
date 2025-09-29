@@ -303,22 +303,31 @@ const Dashboard = () => {
   };
 
   const removeCustomer = async (customerId) => {
+    console.log('🐛 DELETE DEBUG: Attempting to delete customer:', customerId);
+    
     if (!window.confirm('Are you sure you want to delete this customer? This will also remove all their audit logs.')) {
+      console.log('🐛 DELETE DEBUG: User cancelled deletion');
       return;
     }
     
     try {
-      await axios.delete(`${API}/customers/${customerId}`);
+      console.log('🐛 DELETE DEBUG: Making API call to:', `${API}/customers/${customerId}`);
+      const response = await axios.delete(`${API}/customers/${customerId}`);
+      console.log('🐛 DELETE DEBUG: API response:', response.data);
+      
       fetchCustomers();
       fetchStats();
       toast({
         title: "Customer Deleted",
         description: "Customer has been deleted successfully.",
       });
+      console.log('🐛 DELETE DEBUG: Success toast shown');
     } catch (error) {
+      console.error('🐛 DELETE DEBUG: Error occurred:', error);
+      console.error('🐛 DELETE DEBUG: Error response:', error.response?.data);
       toast({
         title: "Error",
-        description: "Failed to delete customer.",
+        description: error.response?.data?.detail || "Failed to delete customer.",
         variant: "destructive",
       });
     }
