@@ -485,7 +485,7 @@ const Dashboard = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => removeCustomer(customer.customer_id)}
+                        onClick={() => removeCustomer(customer.customer_id, customer.name)}
                         data-testid={`delete-customer-${customer.customer_id}`}
                       >
                         Delete
