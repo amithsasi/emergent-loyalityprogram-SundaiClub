@@ -165,6 +165,9 @@ const Dashboard = () => {
   const [customers, setCustomers] = useState([]);
   const [staff, setStaff] = useState([]);
   const [newStaff, setNewStaff] = useState({ name: '', phone_number: '' });
+  const [newCustomer, setNewCustomer] = useState({ name: '', phone_number: '', stamps: 0, rewards: 0 });
+  const [editingStaff, setEditingStaff] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -212,7 +215,28 @@ const Dashboard = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add staff member.",
+        description: error.response?.data?.detail || "Failed to add staff member.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateStaff = async () => {
+    try {
+      await axios.put(`${API}/staff/${editingStaff.phone_number}`, {
+        name: editingStaff.name,
+        phone_number: editingStaff.phone_number
+      });
+      setEditingStaff(null);
+      fetchStaff();
+      toast({
+        title: "Staff Updated",
+        description: "Staff member has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update staff member.",
         variant: "destructive",
       });
     }
@@ -230,6 +254,71 @@ const Dashboard = () => {
       toast({
         title: "Error",
         description: "Failed to remove staff member.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addCustomer = async () => {
+    try {
+      await axios.post(`${API}/customers`, newCustomer);
+      setNewCustomer({ name: '', phone_number: '', stamps: 0, rewards: 0 });
+      fetchCustomers();
+      fetchStats();
+      toast({
+        title: "Customer Added",
+        description: `${newCustomer.name} has been added successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to add customer.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateCustomer = async () => {
+    try {
+      await axios.put(`${API}/customers/${editingCustomer.customer_id}`, {
+        name: editingCustomer.name,
+        phone_number: editingCustomer.phone_number,
+        stamps: parseInt(editingCustomer.stamps),
+        rewards: parseInt(editingCustomer.rewards)
+      });
+      setEditingCustomer(null);
+      fetchCustomers();
+      fetchStats();
+      toast({
+        title: "Customer Updated",
+        description: "Customer has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update customer.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeCustomer = async (customerId) => {
+    if (!window.confirm('Are you sure you want to delete this customer? This will also remove all their audit logs.')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API}/customers/${customerId}`);
+      fetchCustomers();
+      fetchStats();
+      toast({
+        title: "Customer Deleted",
+        description: "Customer has been deleted successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete customer.",
         variant: "destructive",
       });
     }
