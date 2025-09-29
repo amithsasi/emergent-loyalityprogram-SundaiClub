@@ -582,23 +582,65 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {staff.map((member) => (
                   <div key={member.phone_number} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
+                    <div className="flex-1">
                       <div className="font-semibold">{member.name}</div>
                       <div className="text-sm text-gray-600">{member.phone_number}</div>
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeStaff(member.phone_number)}
-                      data-testid={`remove-staff-${member.phone_number}`}
-                    >
-                      Remove
-                    </Button>
+                    <div className="space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingStaff(member)}
+                        data-testid={`edit-staff-${member.phone_number}`}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeStaff(member.phone_number)}
+                        data-testid={`remove-staff-${member.phone_number}`}
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
+
+          {editingStaff && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Staff: {editingStaff.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-staff-name">Name</Label>
+                    <Input
+                      id="edit-staff-name"
+                      value={editingStaff.name}
+                      onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-staff-phone">Phone Number</Label>
+                    <Input
+                      id="edit-staff-phone"
+                      value={editingStaff.phone_number}
+                      onChange={(e) => setEditingStaff({ ...editingStaff, phone_number: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-x-2">
+                  <Button onClick={updateStaff}>Update Staff</Button>
+                  <Button variant="outline" onClick={() => setEditingStaff(null)}>Cancel</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
