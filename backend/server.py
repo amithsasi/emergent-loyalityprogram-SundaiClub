@@ -100,8 +100,8 @@ async def get_customer(customer_id: str, database = Depends(get_database)):
 @api_router.post("/staff", response_model=Staff)
 async def create_staff(staff_data: StaffCreate, database = Depends(get_database)):
     """Create new staff member"""
-    # Trim spaces from phone number and name
-    cleaned_phone = staff_data.phone_number.strip().replace(" ", "")
+    # Trim spaces and remove '+' symbol for consistent phone number format
+    cleaned_phone = staff_data.phone_number.strip().replace(" ", "").replace("+", "")
     cleaned_name = staff_data.name.strip()
     
     # Check if staff already exists
