@@ -19,10 +19,14 @@ class WhatsAppCoffeePassportService:
     async def process_message(self, message_data: IncomingMessage) -> MessageResponse:
         """Process incoming WhatsApp message and return appropriate response"""
         try:
+            # Debug logging for incoming message
+            original_phone = message_data.phone_number
             phone_number = message_data.phone_number.strip().replace(" ", "")
             message_text = message_data.message.strip().upper()
             
-            logger.info(f"Processing message from {phone_number}: {message_text}")
+            logger.info(f"🐛 DEBUG: Original phone from WhatsApp: '{original_phone}'")
+            logger.info(f"🐛 DEBUG: Cleaned phone number: '{phone_number}'")
+            logger.info(f"🐛 DEBUG: Message text: '{message_text}'")
 
             # Handle different commands
             if message_text == "JOIN":
