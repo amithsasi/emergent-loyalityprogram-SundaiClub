@@ -28,10 +28,8 @@ class WhatsAppCoffeePassportService:
         try:
             # Debug logging for incoming message
             original_phone = message_data.phone_number
-            # Clean phone number: remove spaces, +, and @s.whatsapp.net suffix
-            phone_number = message_data.phone_number.strip().replace(" ", "").replace("+", "")
-            if "@s.whatsapp.net" in phone_number:
-                phone_number = phone_number.replace("@s.whatsapp.net", "")
+            # Clean phone number using helper function
+            phone_number = self.clean_phone_number(message_data.phone_number)
             message_text = message_data.message.strip().upper()
             
             logger.info(f"🐛 DEBUG: Original phone from WhatsApp: '{original_phone}'")
