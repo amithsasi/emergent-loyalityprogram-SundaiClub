@@ -16,6 +16,13 @@ class WhatsAppCoffeePassportService:
         self.staff_collection = db.staff
         self.audit_collection = db.audit_logs
 
+    def clean_phone_number(self, phone_number: str) -> str:
+        """Clean phone number by removing spaces, +, and @s.whatsapp.net suffix"""
+        cleaned = phone_number.strip().replace(" ", "").replace("+", "")
+        if "@s.whatsapp.net" in cleaned:
+            cleaned = cleaned.replace("@s.whatsapp.net", "")
+        return cleaned
+
     async def process_message(self, message_data: IncomingMessage) -> MessageResponse:
         """Process incoming WhatsApp message and return appropriate response"""
         try:
