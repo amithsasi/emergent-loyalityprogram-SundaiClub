@@ -162,14 +162,28 @@ class WhatsAppCoffeePassportService:
         for s in all_staff:
             logger.info(f"🐛 DEBUG STAMP: DB Staff - Phone: '{s['phone_number']}', Name: '{s['name']}'")
         
-        # Check if sender is authorized staff
+        # Check if sender is authorized staff - try multiple formats
         logger.info(f"🐛 DEBUG STAMP: Looking for staff with phone: '{clean_staff_phone}'")
+        
+        # Try exact match first
         staff = await self.staff_collection.find_one({"phone_number": clean_staff_phone, "is_authorized": True})
+        
+        # If not found, try with country code prefixed
+        if not staff and not clean_staff_phone.startswith('91'):
+            staff = await self.staff_collection.find_one({"phone_number": f"91{clean_staff_phone}", "is_authorized": True})
+            logger.info(f"🐛 DEBUG STAMP: Trying with country code: '91{clean_staff_phone}'")
+        
+        # If not found, try without country code (if it starts with 91)
+        if not staff and clean_staff_phone.startswith('91') and len(clean_staff_phone) > 10:
+            without_country_code = clean_staff_phone[2:]  # Remove '91'
+            staff = await self.staff_collection.find_one({"phone_number": without_country_code, "is_authorized": True})
+            logger.info(f"🐛 DEBUG STAMP: Trying without country code: '{without_country_code}'")
         
         if staff:
             logger.info(f"🐛 DEBUG STAMP: Staff found! Name: '{staff['name']}'")
         else:
             logger.info(f"🐛 DEBUG STAMP: Staff NOT found in database!")
+            
         if not staff:
             return MessageResponse(
                 reply="You are not authorized to add stamps. Please contact management."
