@@ -143,8 +143,10 @@ class WhatsAppCoffeePassportService:
         # Debug logging for staff authorization
         logger.info(f"🐛 DEBUG STAMP: Received staff_phone: '{staff_phone}'")
         
-        # Ensure phone number is cleaned for database comparison (remove spaces and + symbol)
+        # Ensure phone number is cleaned for database comparison (remove spaces, +, and @s.whatsapp.net)
         clean_staff_phone = staff_phone.strip().replace(" ", "").replace("+", "")
+        if "@s.whatsapp.net" in clean_staff_phone:
+            clean_staff_phone = clean_staff_phone.replace("@s.whatsapp.net", "")
         logger.info(f"🐛 DEBUG STAMP: Cleaned staff_phone: '{clean_staff_phone}'")
         
         # Log all staff in database for comparison
@@ -248,8 +250,10 @@ class WhatsAppCoffeePassportService:
 
     async def _handle_redeem(self, staff_phone: str, message_text: str) -> MessageResponse:
         """Handle REDEEM command - staff confirms reward redemption"""
-        # Ensure phone number is cleaned for database comparison (remove spaces and + symbol)
+        # Ensure phone number is cleaned for database comparison (remove spaces, +, and @s.whatsapp.net)
         clean_staff_phone = staff_phone.strip().replace(" ", "").replace("+", "")
+        if "@s.whatsapp.net" in clean_staff_phone:
+            clean_staff_phone = clean_staff_phone.replace("@s.whatsapp.net", "")
         
         # Check if sender is authorized staff
         staff = await self.staff_collection.find_one({"phone_number": clean_staff_phone, "is_authorized": True})
