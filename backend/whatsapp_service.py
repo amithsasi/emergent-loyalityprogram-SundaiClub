@@ -256,7 +256,7 @@ class WhatsAppCoffeePassportService:
                 reply=f"You need 10 stamps to unlock a reward. Current progress: {customer['stamps']}/10\n\nKeep collecting stamps!"
             )
         
-        # Grant reward
+        # Grant reward (increment rewards, keep stamps until staff confirms redemption)
         await self.customers_collection.update_one(
             {"phone_number": phone_number},
             {
